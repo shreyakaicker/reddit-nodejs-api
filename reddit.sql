@@ -25,10 +25,11 @@ CREATE TABLE `posts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-        
+
+-- create table reddit        
 CREATE TABLE `subreddits` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(30) DEFAULT NULL,
+  `name` varchar(30) NOT NULL,
   `description` varchar(200) DEFAULT NULL,
   `createdAt` TIMESTAMP NOT NULL,
   `updatedAt` TIMESTAMP NOT NULL,
@@ -37,3 +38,7 @@ CREATE TABLE `subreddits` (
   
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- this is what we added in my sql
+alter table subreddits add column subredditId int, ADD FOREIGN KEY (subredditId) REFERENCES subreddits(id);
+
+INSERT into subreddits (name,description) VALUES ("Shreya","strawberry");

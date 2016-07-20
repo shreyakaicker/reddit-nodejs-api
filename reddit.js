@@ -191,8 +191,31 @@ module.exports = function RedditAPI(conn) {
           }
         }
       );
+    },
+     createSubreddit: function(sub, callback) {
+      conn.query(
+        'INSERT INTO subreddits (name, description) VALUES (?, ?)', [sub.name, sub.description],
+        function(err, result) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            conn.query(
+              'SELECT name, description FROM subreddits WHERE id = ?', [result.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  callback(null, result[0]);
+                }
+              }
+            );
+          }
+        }
+      );
     }
-    
+    ///
   }
 }
 

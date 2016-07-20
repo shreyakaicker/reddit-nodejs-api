@@ -46,7 +46,12 @@ var redditAPI = reddit(connection);
 //   console.log(res);
 // });
 
-redditAPI.getSinglePost('1', function(err, res){
-  console.log(err);
-  console.log(res);
+// redditAPI.getSinglePost('1', function(err, res){
+//   console.log(err);
+//   console.log(res);
+// })
+
+redditAPI.createSubreddit({name: 'CodrinsKillings', description: 'UK'}, function(err, res){
+    console.log(err);
+    console.log(res);
 })
