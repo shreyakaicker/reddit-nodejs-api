@@ -95,11 +95,93 @@ module.exports = function RedditAPI(conn) {
       var offset = (options.page || 0) * limit;
       
       conn.query(`
-        SELECT id, title, url, userId, createdAt, updatedAt
-        FROM posts
-        ORDER BY createdAt DESC
-        LIMIT ? OFFSET ?`
-        , [limit, offset],
+        SELECT 
+        id, 
+        title, 
+        url, 
+        userId as postUserId,
+        createdAt as postCreatedAt, 
+        updatedAt as postUpdatedAt,
+        users.id as userId,
+        username,
+        users.createdAt as userCreatedAt,
+        users.updatedAt as userUpdatedAt
+        FROM posts 
+          JOIN users ON users.id=posts.userId
+        ORDER BY posts.createdAt DESC
+        LIMIT ? OFFSET ?`, [limit, offset], 
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            var mappedResults = results.map(function(res){
+
+              return{
+                id: res.id,
+                title: res.title,
+                url: res.url,
+                createdAt: res.postCreatedAt,
+                updatedAt: res.postUpdatedAt,
+                userId: res.postUserId,
+                user: {
+                  id: res.userId,
+                  username: res.username,
+                  createdAt: res.userCreatedAt,
+                  updatedAt: res.userUpdatedAt
+                }
+              }
+            })
+            callback(null, mappedResults);
+          }
+        }
+      );
+    },
+    getAllPostsFromUser: function(userId, options, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {
+        callback = options;
+        options = {};
+      }
+      var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      var offset = (options.page || 0) * limit;
+      
+      conn.query(`
+        SELECT 
+        id, 
+        title, 
+        url, 
+        userId as postUserId,
+        createdAt as postCreatedAt, 
+        updatedAt as postUpdatedAt,
+        users.id as userId,
+        username,
+        users.createdAt as userCreatedAt,
+        users.updatedAt as userUpdatedAt
+        FROM posts 
+          JOIN users ON users.id=posts.userId
+        WHERE p.userId  = ?
+        ORDER BY posts.createdAt DESC
+        LIMIT ? OFFSET ?`[userId, limit, offset], 
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            callback(null, results);
+          }
+        }
+      );
+    },
+    getSinglePost: function(postId, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {
+      }
+      
+      conn.query(`
+        SELECT p.id, p.title, p.url, p.userId, p.createdAt, p.updatedAt
+        FROM posts as p WHERE p.id = ?`,
+        [postId], 
         function(err, results) {
           if (err) {
             callback(err);
@@ -110,5 +192,11 @@ module.exports = function RedditAPI(conn) {
         }
       );
     }
+    
   }
 }
+
+
+
+
+
