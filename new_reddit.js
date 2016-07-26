@@ -89,32 +89,32 @@ module.exports = function RedditAPI(conn) {
     createSubreddit: function(sub, callback) {
       conn.query(
         'INSERT INTO subreddits (name, description) VALUES (?, ?)', [sub.name, sub.description],
-          function(err, result) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              conn.query(
-                'SELECT name, description FROM subreddits WHERE id = ?', [result.insertId],
-                function(err, result) {
-                  if (err) {
-                    callback(err);
-                  }
-                  else {
-                    callback(null, result[0]);
-                  }
+        function(err, result) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            conn.query(
+              'SELECT name, description FROM subreddits WHERE id = ?', [result.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  callback(null, result[0]);
+                }
               }
             );
           }
         }
       );
     },
-    createComment: function(comment, callback)  {
+    createComment: function(comment, callback) {
       if (!comment.userId || !comment.postId) {
         callback(null, new Error('userId and postId required'));
         return;
       }
-      if(!comment.parentId){
+      if (!comment.parentId) {
         comment.parentId = null;
       }
       var date = new Date();
@@ -123,7 +123,7 @@ module.exports = function RedditAPI(conn) {
       // callback(null, true);
 
       // function handleResults(result){
-        
+
       //   console.log(result);
       //   callback(null, true);
       // }
@@ -133,42 +133,41 @@ module.exports = function RedditAPI(conn) {
         `INSERT INTO comments 
           (id, text, createdAt, updatedAt,
           userId, postId, parentId) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)`, 
-          [comment.id, comment.text, date, date, comment.userId, comment.postId, comment.parentId],
-          // function(err,result){
-            function(err,rows){
-            if (err) {
-              callback(err);
-            }
-            else {
-              // console.log(err,rows);
-              conn.query(
-                `SELECT id, text, createdAt, updatedAt, userId, postId, parentId 
-                    FROM comments WHERE id = ?`, [rows.insertId],
-                function(err,result){
-                  if (err) {
-                    callback(err);
-                  }
-                  else {
-                    // handleResults(result);
-                    callback(null, result[0]);
-                  }
-                }
-              );
-            }
+          VALUES (?, ?, ?, ?, ?, ?, ?)`, [comment.id, comment.text, date, date, comment.userId, comment.postId, comment.parentId],
+        // function(err,result){
+        function(err, rows) {
+          if (err) {
+            callback(err);
           }
-        );
-      },
-      getAllPosts: function(options, callback) {
-        // In case we are called without an options parameter, shift all the parameters manually
-        if (!callback) {
-          callback = options;
-          options = {};
+          else {
+            // console.log(err,rows);
+            conn.query(
+              `SELECT id, text, createdAt, updatedAt, userId, postId, parentId 
+                    FROM comments WHERE id = ?`, [rows.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  // handleResults(result);
+                  callback(null, result[0]);
+                }
+              }
+            );
+          }
         }
-        var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-        var offset = (options.page || 0) * limit;
+      );
+    },
+    getAllPosts: function(options, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {
+        callback = options;
+        options = {};
+      }
+      var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      var offset = (options.page || 0) * limit;
 
-        conn.query(`
+      conn.query(`
           SELECT 
           posts.id as postsId, 
           posts.title as postsTitle, 
@@ -191,48 +190,48 @@ module.exports = function RedditAPI(conn) {
             LEFT JOIN subreddits s ON posts.subredditId = s.id
           ORDER BY posts.createdAt DESC
           LIMIT ? OFFSET ?`, [limit, offset],
-          function(err, results) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              var mappedResults = results.map(function(res) {
-
-                return {
-                  id: res.postsId,
-                  title: res.postsTitle,
-                  url: res.postsUrl,
-                  createdAt: res.postCreatedAt,
-                  updatedAt: res.postUpdatedAt,
-                  user: {
-                    id: res.userId,
-                    username: res.usersUsername,
-                    createdAt: res.userCreatedAt,
-                    updatedAt: res.userUpdatedAt
-                  },
-                  subreddit:{
-                    id: res.sId,
-                    name: res.sName,
-                    createdAt: res.sCreatedAt,
-                    updatedAt: res.sUpdatedAt
-                  }
-                };
-              });
-              callback(null, mappedResults);
-            }
+        function(err, results) {
+          if (err) {
+            callback(err);
           }
-        );
-      },
-      getAllPostsFromUser: function(userId, options, callback) {
-        // In case we are called without an options parameter, shift all the parameters manually
-        if (!callback) {
-          callback = options;
-          options = {};
-        }
-        var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-        var offset = (options.page || 0) * limit;
+          else {
+            var mappedResults = results.map(function(res) {
 
-        conn.query(`
+              return {
+                id: res.postsId,
+                title: res.postsTitle,
+                url: res.postsUrl,
+                createdAt: res.postCreatedAt,
+                updatedAt: res.postUpdatedAt,
+                user: {
+                  id: res.userId,
+                  username: res.usersUsername,
+                  createdAt: res.userCreatedAt,
+                  updatedAt: res.userUpdatedAt
+                },
+                subreddit: {
+                  id: res.sId,
+                  name: res.sName,
+                  createdAt: res.sCreatedAt,
+                  updatedAt: res.sUpdatedAt
+                }
+              };
+            });
+            callback(null, mappedResults);
+          }
+        }
+      );
+    },
+    getAllPostsFromUser: function(userId, options, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {
+        callback = options;
+        options = {};
+      }
+      var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      var offset = (options.page || 0) * limit;
+
+      conn.query(`
           SELECT 
           posts.id as postsId,
           posts.userId as postsUserId, 
@@ -251,67 +250,66 @@ module.exports = function RedditAPI(conn) {
           WHERE posts.userId = ?
           ORDER BY posts.createdAt DESC
           LIMIT ? OFFSET ?`, [userId, limit, offset],
-          function(err, results) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              var mappedResults = results.map(function(res) {
-
-                return {
-                  id: res.postsId,
-                  title: res.postsTitle,
-                  url: res.postsUrl,
-                  createdAt: res.postCreatedAt,
-                  updatedAt: res.postUpdatedAt,
-                  userId: res.postUserId,
-                  user: {
-                    id: res.userId,
-                    username: res.usersUsername,
-                    createdAt: res.userCreatedAt,
-                    updatedAt: res.userUpdatedAt
-                  }
-                }
-              })
-              callback(null, mappedResults);
-            };
+        function(err, results) {
+          if (err) {
+            callback(err);
           }
-        );
-      },
-      getSinglePost: function(postId, callback) {
-        // In case we are called without an options parameter, shift all the parameters manually
-        if (!callback) {}
+          else {
+            var mappedResults = results.map(function(res) {
 
-        conn.query(`
+              return {
+                id: res.postsId,
+                title: res.postsTitle,
+                url: res.postsUrl,
+                createdAt: res.postCreatedAt,
+                updatedAt: res.postUpdatedAt,
+                userId: res.postUserId,
+                user: {
+                  id: res.userId,
+                  username: res.usersUsername,
+                  createdAt: res.userCreatedAt,
+                  updatedAt: res.userUpdatedAt
+                }
+              }
+            })
+            callback(null, mappedResults);
+          };
+        }
+      );
+    },
+    getSinglePost: function(postId, callback) {
+      // In case we are called without an options parameter, shift all the parameters manually
+      if (!callback) {}
+
+      conn.query(`
           SELECT p.id, p.title, p.url, p.userId, p.createdAt, p.updatedAt
           FROM posts as p WHERE p.id = ?`, [postId],
-          function(err, results) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              callback(null, results[0]);
-            }
+        function(err, results) {
+          if (err) {
+            callback(err);
           }
-        );
-      },
-      getAllSubreddits: function(callback){
-        var query = `SELECT id, name, description, createdAt, updatedAt FROM subreddits ORDER BY  createdAt DESC`;
-        conn.query(query, function(err, subs){
-          callback(err, subs);
+          else {
+            callback(null, results[0]);
+          }
         }
-        );
-      },
-      getCommentsForPost: function(postId, callback) {
-        // // In case we are called without an options parameter, shift all the parameters manually
-        //   if (!callback) {
-        //     callback = options;
-        //     options = {};
-        //   }
-        //   var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
-        //   var offset = (options.page || 0) * limit;
+      );
+    },
+    getAllSubreddits: function(callback) {
+      var query = `SELECT id, name, description, createdAt, updatedAt FROM subreddits ORDER BY  createdAt DESC`;
+      conn.query(query, function(err, subs) {
+        callback(err, subs);
+      });
+    },
+    getCommentsForPost: function(postId, callback) {
+      // // In case we are called without an options parameter, shift all the parameters manually
+      //   if (!callback) {
+      //     callback = options;
+      //     options = {};
+      //   }
+      //   var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
+      //   var offset = (options.page || 0) * limit;
 
-        conn.query(`
+      conn.query(`
           SELECT
           c1.id as c1_id, c1.text as c1_text, c1.parentId as c1_parentId,
           c2.id as c2_Id, c2.text as c2_text, c2.parentId as c2_parentId,
@@ -323,15 +321,41 @@ module.exports = function RedditAPI(conn) {
           
           WHERE c1.postId  = ? AND c1.parentId IS NULL`, [postId],
 
-          function(err, results) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              callback(null, results);
-            }
+        function(err, results) {
+          if (err) {
+            callback(err);
           }
-        );
-      },
+          else {
+            callback(null, results);
+          }
+        }
+      );
+    },
+ 
+
+    getPostsFive: function(callback) {
+
+      var results = conn.query(`SELECT username, posts.createdAt, title, url
+  FROM posts 
+  join users ON posts.userId = users.id 
+  order by posts.createdAt desc 
+  limit 5`,
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            callback(null, results);
+          }
+        }
+      );
+
+
+
+    }
+
+
   }
+
+
 }

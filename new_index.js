@@ -1,6 +1,7 @@
 // load the mysql library
 var mysql = require('mysql');
-
+var express = require('express');
+var app = express();
 // create a connection to our Cloud9 server
 var connection = mysql.createConnection({
   host     : 'localhost',
@@ -35,6 +36,21 @@ var redditAPI = reddit(connection);
 //     console.log(post);
 //   }  
 // });
+
+redditAPI.createPost({
+  title: 'Hello Reddit!',
+  url: 'https://www.reddit.com',
+  userId: '1',
+  subredditId: null
+  }, 
+  function(err, post) {
+  if (err) {
+    console.log(err);  
+  }
+  else {
+    console.log(post);
+  }  
+});
 
 // redditAPI.createPost({
 //   title: 'Howdy do!',
@@ -239,3 +255,46 @@ redditAPI.getCommentsForPost(1, function(err,comments){
   });
   console.log(JSON.stringify(finalComments, null, 4));
 });
+
+
+
+  
+  app.get('/posts', function(req, res) {
+    redditAPI.getPostsFive( function (err, result) {
+      
+      if (err) { 
+        res.status(500).send(err);
+      }
+      
+      else {
+      console.log(result);
+      
+//       res.send(` 
+//         <div id="contents">
+//   <h1>List of contents</h1>
+//   <ul class="contents-list">
+//     <li class="content-item">
+//       <h2 class="content-item__title">
+//         <a href="http://the.post.url.value/">The content title</a>
+//       </h2>
+//       <p>Created by CONTENT AUTHOR USERNAME </p>
+//     </li>
+//     ... one <li> per content that your Sequelize query found
+//   </ul>
+// </div>`)
+    }
+    
+    }
+    )
+  });
+  
+  
+  
+// Boilerplate code to start up the web server
+var server = app.listen(process.env.PORT, process.env.IP, function () {
+ var host = server.address().address;
+ var port = server.address().port;
+
+ console.log('Example app listening at http://%s:%s', host, port);
+});
+  
